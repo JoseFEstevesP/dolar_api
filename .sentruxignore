@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+README.md
+scripts/templates.js
+dist/
+node_modules/
+docs/
+*.json
+*.yaml
+*.yml

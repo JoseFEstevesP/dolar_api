@@ -1,0 +1,162 @@
+# ───────────────────────────────────────────────────────
+# Sentrux Rules — Arquitectura NestJS + Sequelize
+# Ubicación: .sentrux/rules.toml
+# ───────────────────────────────────────────────────────
+# Capas (orden de dependencia ascendente):
+#   0 → Entidades/Modelos (foundation)
+#   1 → Repositorios
+#   2 → Use-cases, Guards, Decorators, Services
+#   3 → Controladores, DTOs
+#   4 → Módulos (composición final)
+#
+# Las capas superiores pueden depender de inferiores.
+# Reglas explícitas adicionales anulan este permiso
+# para violaciones específicas.
+
+[constraints]
+# Tolerancia cero a ciclos (Regla 3)
+max_cycles = 0
+# Límites de calidad (escala 0–1)
+min_quality = 0.50
+min_acyclicity = 0.90
+max_cc = 30
+max_fn_lines = 120
+max_file_lines = 500
+no_god_files = true
+
+# ── Definición de capas ──────────────────────────────
+
+[[layers]]
+name = "entities"
+paths = ["src/**/*.entity.ts"]
+order = 0
+
+[[layers]]
+name = "repositories"
+paths = ["src/**/*.repository.ts"]
+order = 1
+
+[[layers]]
+name = "use-cases"
+paths = ["src/**/*.use-case.ts"]
+order = 2
+
+[[layers]]
+name = "services"
+paths = ["src/services/*", "src/**/adapters/*"]
+order = 2
+
+[[layers]]
+name = "guards"
+paths = ["src/**/*.guard.ts", "src/**/*.decorator.ts"]
+order = 3
+
+[[layers]]
+name = "controllers"
+paths = ["src/**/*.controller.ts"]
+order = 4
+
+[[layers]]
+name = "modules"
+paths = ["src/**/*.module.ts"]
+order = 5
+
+# ── Regla 1: Controladores NO importan entidades ─────
+# Los controladores son la capa de presentación.
+# No deben conocer el modelo de datos directamente.
+[[boundaries]]
+from = "src/**/*.controller.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El controlador «{from}» importa la entidad «{to}». Los controladores NO deben importar entidades. Use casos de uso (use-cases) o DTOs para intercambiar datos con las capas inferiores."
+
+# ── Regla 2: Servicios NO importan controladores ─────
+# Los servicios son infraestructura transversal.
+# Importar controladores crea una dependencia
+# ascendente que rompe el flujo unidireccional.
+[[boundaries]]
+from = "src/services/*"
+to = "src/**/*.controller.ts"
+reason = "VIOLACIÓN: El servicio «{from}» importa el controlador «{to}». Los servicios no deben depender de controladores. Si necesita notificar a la capa de presentación, use eventos o mecanismos de callback."
+
+# Servicios NO importan módulos de NestJS
+[[boundaries]]
+from = "src/services/*"
+to = "src/**/*.module.ts"
+reason = "VIOLACIÓN: El servicio «{from}» importa el módulo «{to}». Los servicios no deben importar módulos. Inyecte los providers que necesite vía constructor."
+
+# Casos de uso NO importan controladores
+[[boundaries]]
+from = "src/**/*.use-case.ts"
+to = "src/**/*.controller.ts"
+reason = "VIOLACIÓN: El caso de uso «{from}» importa el controlador «{to}». Los casos de uso no deben conocer la capa de presentación."
+
+# Casos de uso NO importan módulos
+[[boundaries]]
+from = "src/**/*.use-case.ts"
+to = "src/**/*.module.ts"
+reason = "VIOLACIÓN: El caso de uso «{from}» importa el módulo «{to}». Los casos de uso no deben importar módulos de NestJS."
+
+# ── Regla 4: Solo Repositories importan entidades ────
+# Los repositorios son la ÚNICA capa autorizada para
+# importar modelos de Sequelize. Cualquier otro archivo
+# debe obtener datos a través de un repositorio.
+
+[[boundaries]]
+from = "src/**/*.controller.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El controlador «{from}» importa la entidad «{to}». Solo los repositorios (*.repository.ts) pueden importar entidades."
+
+[[boundaries]]
+from = "src/**/*.use-case.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El caso de uso «{from}» importa la entidad «{to}». Los casos de uso deben usar repositorios para acceder a datos, no importar entidades directamente."
+
+[[boundaries]]
+from = "src/services/*"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El servicio «{from}» importa la entidad «{to}». Los servicios de infraestructura no deben conocer las entidades del dominio."
+
+[[boundaries]]
+from = "src/**/*.guard.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El guard «{from}» importa la entidad «{to}». Los guards no deben importar entidades."
+
+[[boundaries]]
+from = "src/**/*.decorator.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El decorador «{from}» importa la entidad «{to}». Los decoradores no deben importar entidades."
+
+[[boundaries]]
+from = "src/**/*.module.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El módulo «{from}» importa la entidad «{to}». Los módulos no deben importar entidades directamente."
+
+[[boundaries]]
+from = "src/**/*.filter.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El filter «{from}» importa la entidad «{to}». Los filters no deben importar entidades."
+
+[[boundaries]]
+from = "src/**/*.interceptor.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El interceptor «{from}» importa la entidad «{to}». Los interceptors no deben importar entidades."
+
+[[boundaries]]
+from = "src/**/*.middleware.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El middleware «{from}» importa la entidad «{to}». Los middlewares no deben importar entidades."
+
+[[boundaries]]
+from = "src/**/*.pipe.ts"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El pipe «{from}» importa la entidad «{to}». Los pipes no deben importar entidades."
+
+[[boundaries]]
+from = "src/**/dto/*"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El DTO «{from}» importa la entidad «{to}». Los DTOs deben definir sus propios campos, no reutilizar entidades."
+
+[[boundaries]]
+from = "src/**/adapters/*"
+to = "src/**/*.entity.ts"
+reason = "VIOLACIÓN: El adapter «{from}» importa la entidad «{to}». Los adapters deben trabajar con interfaces, no con entidades directamente."
