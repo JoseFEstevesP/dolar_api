@@ -1,17 +1,5 @@
 allowBuilds:
-  '@nestjs/core': true
-  '@scarf/scarf': true
-  '@swc/core': true
-  bcrypt: true
-  cpu-features: true
-  esbuild: true
-  protobufjs: true
-  ssh2: true
-onlyBuiltDependencies:
-  - '@nestjs/core'
-  - '@scarf/scarf'
-  - '@swc/core'
-  - bcrypt
-  - esbuild
-  - sharp
-  - unrs-resolver
+  '@nestjs/core': set this to true or false
+  '@scarf/scarf': set this to true or false
+  '@swc/core': set this to true or false
+  esbuild: set this to true or false

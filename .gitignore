@@ -4,6 +4,7 @@
 /build
 /uploads
 /backups
+/data/rates.json
 
 # Logs
 logs
