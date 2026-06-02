@@ -7,14 +7,12 @@ import {
 import { Observable } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { LoggerService } from '../services/logger.service';
-import { MetricsService } from '../services/metrics.service';
 import { correlationIdHeader } from '../correlation-id/correlationId.middleware';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
 	constructor(
 		private readonly logger: LoggerService,
-		private readonly metrics: MetricsService,
 	) {}
 
 	intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -24,20 +22,11 @@ export class LoggingInterceptor implements NestInterceptor {
 		const correlationId =
 			req[correlationIdHeader] || req.headers['x-correlation-id'];
 		const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
-		const userId = req.user?.uid || 'anonymous';
 		const { method, url } = req;
 
 		const now = Date.now();
 
-		this.logger.logRequest({
-			method,
-			url,
-			correlationId,
-			userId,
-			ip,
-		});
-
-		this.metrics.increment('http.requests.total', { method, path: url });
+		this.logger.logRequest({ method, url, correlationId, ip });
 
 		return next.handle().pipe(
 			tap(() => {
@@ -45,20 +34,10 @@ export class LoggingInterceptor implements NestInterceptor {
 				const { statusCode } = res;
 
 				this.logger.logResponse(
-					{ method, url, correlationId, userId, ip },
+					{ method, url, correlationId, ip },
 					{ statusCode },
 					responseTime,
 				);
-
-				this.metrics.increment('http.responses.total', {
-					method,
-					status: statusCode.toString(),
-				});
-
-				this.metrics.histogram('http.response.time', responseTime, {
-					method,
-					status: statusCode >= 400 ? 'error' : 'success',
-				});
 
 				this.logger.logSlowRequest(
 					{ method, url, correlationId },
@@ -73,7 +52,6 @@ export class LoggingInterceptor implements NestInterceptor {
 					'LoggingInterceptor',
 					{
 						correlationId,
-						userId,
 						ip,
 						method,
 						url,
@@ -82,11 +60,6 @@ export class LoggingInterceptor implements NestInterceptor {
 						stack: err.stack,
 					},
 				);
-
-				this.metrics.increment('http.errors.total', {
-					method,
-					error: err.name || 'Error',
-				});
 
 				throw err;
 			}),

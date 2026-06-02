@@ -1,79 +1,38 @@
 export const globalMsg = {
-	userUnauthorized: 'Usuario no autorizado',
-	throttler: 'Demasiadas solicitudes. Intente de nuevo más tarde.',
-	dto: {
-		arrayValue: 'Este valor debe ser un array',
-		uid: {
-			valid: 'El campo UID no es un UUID válido',
-			empty: 'El campo UID no puede estar vacío',
-		},
-		empty: 'Este campo no puede estar vacío',
-		defined: 'Este campo no está definido',
-		stringValue: 'Este campo debe ser de tipo cadena de texto',
-		arrayStringValue: 'Este campo debe ser un array de cadenas de texto',
-		status: 'Este campo debe ser de tipo booleano',
-		enumValue: 'Valor no válido',
-		lengthValue: 'Este campo debe tener entre 3 y 255 caracteres',
-	},
-	log: {
-		recoveryPassword:
-			'Se envió el correo para recuperar la contraseña a la dirección:',
-		activatedAccount:
-			'Se envió el correo para la activación de la cuenta a la dirección:',
-	},
 	swagger: {
-		title: 'API REST - Gestión de Usuarios',
+		title: 'Dolar API - Tasa de Cambio BCV',
 		description: `
 ## Acerca de la API
 
-Esta API proporciona endpoints para la gestión de usuarios, autenticación y control de acceso.
+API para consultar la tasa de cambio publicada por el Banco Central de Venezuela (BCV).
 
-### Autenticación
+### Monedas Soportadas
 
-La API utiliza JWT (JSON Web Tokens) para la autenticación. Para acceder a endpoints protegidos:
+- \`usd\` — Dólar estadounidense
+- \`eur\` — Euro
+- \`cny\` — Yuan chino
+- \`try\` — Lira turca
+- \`rub\` — Rublo ruso
 
-1. Iniciar sesión con \`POST /api/auth/login\` para obtener tokens de acceso
-2. Incluir el token en el header: \`Authorization: Bearer <access_token>\`
-3. El token de acceso expira según configuración del servidor
-4. Usar \`POST /api/auth/refresh-token\` para renovar el token
+### Endpoints
 
-### Versionado
+- \`GET /api/exchange-rate/current\` — Todas las tasas actuales
+- \`GET /api/exchange-rate/current/:currency\` — Tasa de una moneda específica
+- \`GET /api/exchange-rate/date/:date\` — Tasas de una fecha del historial
+- \`GET /api/exchange-rate/history\` — Historial completo de tasas
+- \`GET /api/exchange-rate/convert?from=USD&to=EUR&amount=100\` — Conversión entre monedas
+- \`GET /api/exchange-rate/last-update\` — Información de la última actualización
+- \`GET /api/health\` — Estado del servidor
 
-- **v1**: Versión actual de la API
-- El versionado se indica en la URL: \`/api/v1/...\`
+### Conversión
 
-### Códigos de Estado
+Todas las conversiones usan VES (Bolívar) como moneda puente.
 
-| Código | Descripción |
-|--------|-------------|
-| 200 | OK - Solicitud exitosa |
-| 201 | Created - Recurso creado |
-| 400 | Bad Request - Datos inválidos |
-| 401 | Unauthorized - Autenticación requerida |
-| 403 | Forbidden - Acceso denegado |
-| 404 | Not Found - Recurso no encontrado |
-| 429 | Too Many Requests - Rate limit excedido |
-| 500 | Internal Server Error - Error del servidor |
+### Rotación de Datos
 
-### Rate Limiting
-
-La API implementa rate limiting con los siguientes límites:
-- **Cortos**: 100 petitions/60s (consultas generales)
-- **Medios**: 50 petitions/5min (búsquedas)
-- **Largos**: 20 petitions/10min (operaciones pesadas)
-- **Auth**: 5 petitions/15min (autenticación)
-
-### Errores Comunes
-
-\`\`\`json
-{
-  "statusCode": 400,
-  "message": "El correo electrónico es requerido",
-  "error": "Bad Request"
-}
-\`\`\`
+Los registros del historial mayores a 3 meses son eliminados automáticamente al guardar nuevos datos.
 		`,
-		version: '1.0.0',
+		version: '1.1.0',
 		contact: {
 			name: 'Soporte API',
 			email: 'soporte@ejemplo.com',
@@ -83,29 +42,13 @@ La API implementa rate limiting con los siguientes límites:
 			url: 'https://opensource.org/licenses/MIT',
 		},
 		tags: {
-			user: {
-				name: 'User',
-				description: 'Gestión de usuarios - Endpoints para CRUD de usuarios',
-			},
-			rol: {
-				name: 'Rol',
-				description: 'Gestión de roles y permisos - Control de acceso',
-			},
-			audit: {
-				name: 'Audit',
-				description: 'Registros de auditoría - Historial de acciones',
-			},
-			auth: {
-				name: 'Auth',
-				description: 'Autenticación - Login, logout, refresh token',
-			},
-			files: {
-				name: 'Files',
-				description: 'Gestión de archivos - Subida y descarga',
+			exchangeRate: {
+				name: 'ExchangeRate',
+				description: 'Tasas de cambio del BCV',
 			},
 			health: {
 				name: 'Health',
-				description: 'Estado del sistema - Health checks',
+				description: 'Estado del servidor',
 			},
 		},
 	},

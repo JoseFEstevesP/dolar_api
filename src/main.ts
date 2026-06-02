@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
-import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { EnvironmentVariables } from './config/env.config';
@@ -17,36 +16,19 @@ import { globalMsg } from './globalMsg';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { LoggerService } from './services/logger.service';
-import { MetricsService } from './services/metrics.service';
 
 function setupSwagger(app: INestApplication) {
 	const config = new DocumentBuilder()
 		.setTitle(globalMsg.swagger.title)
 		.setDescription(globalMsg.swagger.description)
 		.setVersion(globalMsg.swagger.version)
-		.addServer('http://localhost:3000/api', 'Servidor Local')
-		.addServer('https://tu-dominio.com/api', 'Servidor de Producción')
-		.addCookieAuth('refreshToken', {
-			type: 'apiKey',
-			in: 'cookie',
-			name: 'refreshToken',
-		})
-		.addBearerAuth()
 		.addTag(
-			globalMsg.swagger.tags.user.name,
-			globalMsg.swagger.tags.user.description,
+			globalMsg.swagger.tags.health.name,
+			globalMsg.swagger.tags.health.description,
 		)
 		.addTag(
-			globalMsg.swagger.tags.rol.name,
-			globalMsg.swagger.tags.rol.description,
-		)
-		.addTag(
-			globalMsg.swagger.tags.audit.name,
-			globalMsg.swagger.tags.audit.description,
-		)
-		.addTag(
-			globalMsg.swagger.tags.auth.name,
-			globalMsg.swagger.tags.auth.description,
+			globalMsg.swagger.tags.exchangeRate.name,
+			globalMsg.swagger.tags.exchangeRate.description,
 		)
 		.build();
 
@@ -56,7 +38,6 @@ function setupSwagger(app: INestApplication) {
 		extraModels: [],
 	});
 
-	// Generación de documentación si se especifica el flag
 	if (process.argv.includes('--generate-docs')) {
 		const fs = require('fs');
 		const path = require('path');
@@ -130,13 +111,12 @@ async function bootstrap() {
 	);
 
 	const loggerService = new LoggerService();
-	const metricsService = new MetricsService();
 
 	const httpAdapterHost = app.get(HttpAdapterHost);
 	app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost, loggerService));
 
 	app.useGlobalInterceptors(
-		new LoggingInterceptor(loggerService, metricsService),
+		new LoggingInterceptor(loggerService),
 		new TransformInterceptor(),
 	);
 
@@ -176,8 +156,6 @@ async function bootstrap() {
 	);
 
 	app.setGlobalPrefix('api');
-
-	app.use(cookieParser());
 
 	setupSwagger(app);
 
